@@ -8,9 +8,12 @@
       <div>
          <input type="file" id="uploadImg" onchange="uploadFile()" /><br/>
          <!--<input type="button" onclick="readFileContent()" value="display" />-->
-         <input type="button" onclick="mediumFilter()" value="medium" />
+         <input type="button" onclick="threshold()" value="medium" />
          <div>
-            <canvas id="originCanvas" width="800" height="600" style="position:relative;"></canvas>
+            <canvas id="originCanvas" height="600" width="600"></canvas>
+         </div>
+         <div>
+            <canvas id="resultCanvas" height="600" width="600"></canvas>
          </div>
       </div>
    </BODY>
