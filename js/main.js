@@ -9,6 +9,8 @@ var originCanvas;
 var originContext;
 var resultCanvas;
 var resultContext;
+var segX;
+var segY;
 
 function init(){
    originCanvas = $("#originCanvas")[0];
@@ -16,6 +18,11 @@ function init(){
    resultCanvas = $("#resultCanvas")[0];
    resultContext = resultCanvas.getContext("2d");
    image = new Image();
+
+   var canvas = $("#originCanvas")[0];
+   canvas.addEventListener('mousedown', function(evt){
+   getMousePos(canvas,evt);
+   }, false);
 }
 
 function uploadFile(){
@@ -28,7 +35,10 @@ function uploadFile(){
 
 function openfile(event){
    image.src = event.target.result;
-   image.onload = function(event){originContext.drawImage(image,0,0,image.width,image.height)};
+   image.onload = function(event){originContext.drawImage(image,0,0,image.width,image.height);
+                                  resultContext.drawImage(image,0,0,image.width,image.height);
+                                  };
+
 }
 
 function readFileContent(){
@@ -41,6 +51,9 @@ function threshold(){
    var pixels;
    var resultImageData;
    var resultPixels;
+   
+   moveData = resultContext.getImageData(0, 0, image.width, image.height);
+   originContext.putImageData(moveData, 0, 0);
 
    imageData = originContext.getImageData(0, 0, image.width, image.height);
    resultImageData = resultContext.createImageData(image.width, image.height);
@@ -64,6 +77,9 @@ function mediumFilter(){
    var resultImageData;
    var resultPixels;
 
+   moveData = resultContext.getImageData(0, 0, image.width, image.height);
+   originContext.putImageData(moveData, 0, 0);
+
    imageData = originContext.getImageData(0, 0, image.width, image.height);
    resultImageData = imageData;
    pixels = imageData.data;
@@ -83,6 +99,10 @@ function mediumFilter(){
    //alert("display on result canvas!");
 }
 
+function segmentation(){
+   alert(segX + "\n" + segY);
+}
+//sub function
 function midiumByWindow(image, x, y){
    var window = [getIntensity(image, x-1, y-1),
                  getIntensity(image, x-1, y),
@@ -98,6 +118,7 @@ function midiumByWindow(image, x, y){
    return window[4];
 }
 
+//getter
 function getIntensity(imageData, x, y){
    var r = imageData[image.width*y*4 + x*4];
    var g = imageData[image.width*y*4 + x*4 +1];
@@ -105,9 +126,17 @@ function getIntensity(imageData, x, y){
    return (r + g + b)/3;
 }
 
+//setter
 function setIntensity(imageData, x, y, value){
    imageData[image.width*y*4 + x*4] = value;
    imageData[image.width*y*4 + x*4 +1] = value;
    imageData[image.width*y*4 + x*4 +2] = value;
    imageData[image.width*y*4 + x*4 +3] = 255;
+}
+
+//mouse event
+function getMousePos(canvas, evt){
+   var rect = canvas.getBoundingClientRect();
+   segX = evt.clientX - rect.left;
+   segY = evt.clientY - rect.top;
 }

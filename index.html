@@ -7,8 +7,9 @@
    <BODY onload="init()">
       <div>
          <input type="file" id="uploadImg" onchange="uploadFile()" /><br/>
-         <!--<input type="button" onclick="readFileContent()" value="display" />-->
-         <input type="button" onclick="threshold()" value="medium" />
+         <input type="button" onclick="threshold()" value="threshold" />
+         <input type="button" onclick="mediumFilter()" value="medium" />
+         <input type="button" onclick="segmentation()" value="calculate" />
          <div>
             <canvas id="originCanvas" height="600" width="600"></canvas>
          </div>
