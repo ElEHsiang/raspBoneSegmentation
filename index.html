@@ -7,14 +7,19 @@
    <BODY onload="init()">
       <div>
          <input type="file" id="uploadImg" onchange="uploadFile()" /><br/>
+         <input type="button" onclick="gradientMap()" value="gradient" />
          <input type="button" onclick="threshold()" value="threshold" />
          <input type="button" onclick="mediumFilter()" value="medium" />
          <input type="button" onclick="segmentation()" value="calculate" />
-         <div>
+         <br>
+         <input type="file" id="uploadCompareImg" onchange="uploadCompareFile()" value="loadCompareImg" />
+         <input type="button" onclick="comparation()" value="compare" />
+         <div> 
             <canvas id="originCanvas" height="600" width="600"></canvas>
-         </div>
-         <div>
             <canvas id="resultCanvas" height="600" width="600"></canvas>
+         </div>
+            <div> 
+            <canvas id="compareCanvas" height="600" width="600"></canvas>
          </div>
       </div>
    </BODY>
