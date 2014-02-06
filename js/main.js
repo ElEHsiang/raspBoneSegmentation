@@ -15,6 +15,11 @@ var pointStack;
 var mark;
 var gradient;
 var maxGradient
+var segmentContour;
+var groundTruthContour;
+var segmentRegion;
+var groundTruthRegion;
+
 function init(){
    originCanvas = $("#originCanvas")[0];
    originContext = originCanvas.getContext("2d");
@@ -22,9 +27,14 @@ function init(){
    resultContext = resultCanvas.getContext("2d");
    compareCanvas = $("#compareCanvas")[0];
    compareContext = compareCanvas.getContext("2d");
+
    image = new Image();
    compareImage = new Image();
+
    pointStack = new Array();
+   segmentContour = new Array();
+   groundTruthContour = new Array();
+
    mark = new Array(600);
    for(var i = 0; i < 600; i++){
       mark[i] = new Array(600);
@@ -35,10 +45,22 @@ function init(){
       gradient[i] = new Array(600);
    }
 
+   segmentRegion = new Array(600);
+   for(var i = 0; i < 600; i++){
+      segmentRegion[i] = new Array(600);
+   }
+
+   groundTruthRegion = new Array(600);
+   for(var i = 0; i < 600; i++){
+      groundTruthRegion[i] = new Array(600);
+   }
+
    for(var i = 0; i < 600; i++){
       for(var j = 0; j < 600; j++){
          gradient[i][j] = 0;
          mark[i][j] = 0;
+         segmentRegion[i][j] = 0;
+         groundTruthRegion[i][j] = 0;
       }
    }
    
@@ -80,6 +102,137 @@ function openCompareFile(event){
 
 function readFileContent(){
    fileReader.readAsDataURL(file);
+}
+
+// comparation
+function comparation(){
+   MAD();
+   DSC();
+}
+
+function MAD(){
+   
+   var MADvalue;
+   var segmentDis = 0;
+   var groundTruthDis = 0;
+
+   segmentData = originContext.getImageData(0, 0, image.width, image.height);
+   groundTruthData = compareContext.getImageData(0, 0, image.width, image.height);
+
+   for(var i = 0; i < 600; i++){
+      for(var j = 0; j < 600; j++){
+         if(mark[i][j] == 2){
+            segmentContour.push(createPoint(i,j));
+         }
+         if(groundTruthData.data[i*image.width*4 + j*4] != groundTruthData.data[i*image.width*4 + j*4 + 1]){
+            groundTruthContour.push(createPoint(i,j));
+         }
+      }
+   }
+
+   for(var i = 0; i < segmentContour.length; i++){
+      var minDis = 9999;
+      for(var j = 0; j < groundTruthContour.length; j++){
+         var x = segmentContour[i].x - groundTruthContour[j].x;
+         var y = segmentContour[i].y - groundTruthContour[j].y;
+         var dis = Math.sqrt(x*x + y * y);
+
+         if(dis < minDis){
+            minDis = dis;
+         }
+      }
+      segmentDis += minDis;
+   }
+   segmentDis = segmentDis / segmentContour.length;
+
+   for(var i = 0; i < groundTruthContour.length; i++){
+      var minDis = 9999;
+      for(var j = 0; j < segmentContour.length; j++){
+         var x = segmentContour[j].x - groundTruthContour[i].x;
+         var y = segmentContour[j].y - groundTruthContour[i].y;
+         var dis = Math.sqrt(x*x + y * y);
+
+         if(dis < minDis){
+            minDis = dis;
+         }
+      }
+      groundTruthDis += minDis;
+   }
+   groundTruthDis = groundTruthDis / groundTruthContour.length;
+
+   MADvalue = (segmentDis + groundTruthDis)/2;
+
+   $("#MAD").text("MAD : " + MADvalue);
+}
+
+function DSC(){
+
+   var coverCount = 0;
+   var segmentCount = 0;
+   var groundTruthCount = 0;
+   var DSCvalue = 0;
+
+   countDSCRegion();
+
+   alert("done DSC region");
+
+   for(var i = 0; i < 512; i++){
+      for(var j = 0; j < 512; j++){
+         if(groundTruthRegion[i][j] == 0 && segmentRegion[i][j] == 0){
+            coverCount++;
+         }
+         if(groundTruthRegion[i][j] == 0){
+            groundTruthCount++;
+         }
+         if(segmentRegion[i][j] == 0){
+            segmentCount++;
+         }
+      }
+   }
+
+
+   DSCvalue = (2*coverCount)/(groundTruthCount + segmentCount);
+
+   $("#DSC").text("DSC: " + DSCvalue);
+}
+
+function countDSCRegion(){
+
+   var segmentStack = new Array();
+   var groundTruthStack = new Array();
+
+   segmentData = originContext.getImageData(0, 0, image.width, image.height);
+   groundTruthData = compareContext.getImageData(0, 0, image.width, image.height);
+
+   segmentStack.push(createPoint(10, 10)); 
+   groundTruthStack.push(createPoint(10, 10)); 
+
+   while(groundTruthStack.length > 0){
+
+      var point = groundTruthStack.pop();
+
+      if(point.x+1 > 512 || point.y+1 > 512 || point.x-1 < 0 || point.y-1 < 0 || groundTruthRegion[point.y][point.x] != 0){
+      }else{
+         if(groundTruthData.data[point.y*image.width*4 + point.x*4] != groundTruthData.data[point.y*image.width*4 + point.x*4 + 1]){
+         }else{
+            groundTruthRegion[point.y][point.x] = 1;
+            groundTruthStack.push(createPoint(point.x+1, point.y));
+            groundTruthStack.push(createPoint(point.x, point.y+1));
+            groundTruthStack.push(createPoint(point.x-1, point.y));
+            groundTruthStack.push(createPoint(point.x, point.y-1));
+         }
+      
+      }
+   }
+
+   //segmentation region
+   for(var i = 0; i < 512; i++){
+      for(var j = 0; j < 512; j++){
+         if(mark[i][j] == 3){
+            segmentRegion[i][j] = 1;
+         } 
+      }
+   }
 }
 
 // image process
